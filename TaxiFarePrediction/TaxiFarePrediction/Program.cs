@@ -22,12 +22,13 @@ namespace TaxiFarePrediction
         static readonly string _testdatapath = Path.Combine(Environment.CurrentDirectory, "Data", "test.csv");
         static readonly string _modelpath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            PredictionModel<TaxiTrip, TaxiTripFarePrediction> model = Train();
+            PredictionModel<TaxiTrip, TaxiTripFarePrediction> model = await Train();
+            Evaluate(model);
         }
 
-        public static PredictionModel<TaxiTrip, TaxiTripFarePrediction> Train()
+        public static async Task<PredictionModel<TaxiTrip, TaxiTripFarePrediction>> Train()
         {
             #region Optional
             /*
@@ -67,6 +68,25 @@ namespace TaxiFarePrediction
                     "PaymentType"),
                 new FastTreeRegressor()
             };
+            PredictionModel<TaxiTrip, TaxiTripFarePrediction> model = pipeline.Train<TaxiTrip, TaxiTripFarePrediction>();
+            await model.WriteAsync(_modelpath);
+            return model;
+        }
+
+        private static void Evaluate(PredictionModel<TaxiTrip, TaxiTripFarePrediction> model)
+        {
+            var testData = new TextLoader(_testdatapath).CreateFrom<TaxiTrip>(useHeader: true, separator: ',');
+
+            var evaluator = new RegressionEvaluator();
+            RegressionMetrics metrics = evaluator.Evaluate(model, testData);
+
+            Console.WriteLine($"RMS = {metrics.Rms}");
+            Console.WriteLine($"RSquared = {metrics.RSquared}");
+
+
+            // Using the model for predictions
+            TaxiTripFarePrediction prediction = model.Predict(TestTrip.Trip1);
+            Console.WriteLine($"Predicted fare: {prediction.FareAmount}, actual fare: 29.5");
         }
     }
 }
