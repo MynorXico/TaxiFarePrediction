@@ -29,8 +29,44 @@ namespace TaxiFarePrediction
 
         public static PredictionModel<TaxiTrip, TaxiTripFarePrediction> Train()
         {
-            LearningPipeline pipeline = new LearningPipeline();
+            #region Optional
+            /*
+                LearningPipeline pipeline = new LearningPipeline();
+                pipeline.Add(new TextLoader(_datapath).CreateFrom<TaxiTrip>(useHeader: true, separator: ','));
+                pipeline.Add(new ColumnCopier(("FareAmount", "Label")));
+                pipeline.Add(new CategoricalOneHotVectorizer("VendorId",
+                                                            "RateCode",
+                                                            "PaymentType"));
 
+                // Indicate which columns are features
+                pipeline.Add(new ColumnConcatenator("Features",
+                    "VendorId",
+                    "RateCode",
+                    "Passengercount",
+                    "TripDistance",
+                    "PaymentType"));
+
+                pipeline.Add(new FastTreeRegressor());
+            */
+            #endregion
+
+            var pipeline = new LearningPipeline
+            {
+                new TextLoader(_datapath).CreateFrom<TaxiTrip>(useHeader: true, separator: ','),
+                new ColumnCopier(("FareAmount", "Label")),
+                new CategoricalOneHotVectorizer(
+                    "VendorId",
+                    "RateCode",
+                    "PaymentType"),
+                new ColumnConcatenator(
+                    "Features",
+                    "VendorId",
+                    "RateCode",
+                    "PassengerCount",
+                    "TripDistance",
+                    "PaymentType"),
+                new FastTreeRegressor()
+            };
         }
     }
 }
